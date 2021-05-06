@@ -1,0 +1,35 @@
+---
+title: "Bitcoin"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(janitor)
+```
+
+
+```{r}
+bitcoin <- read_csv("bitcoin data.csv") %>% janitor::clean_names()
+```
+
+```{r}
+head(bitcoin)
+```
+
+```{r}
+tail(bitcoin)
+```
+
+Formats time to Central Time.
+```{r}
+bitcoin$timestamp <- .POSIXct(bitcoin$timestamp, tz = "US/Central")
+```
+
+```{r}
+
+```
+
+
+
+
