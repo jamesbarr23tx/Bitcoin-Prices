@@ -6,6 +6,9 @@ output: html_notebook
 ```{r}
 library(tidyverse)
 library(janitor)
+library(forecast)
+library(zoo)
+library(lubridate)
 ```
 
 
@@ -21,15 +24,49 @@ head(bitcoin)
 tail(bitcoin)
 ```
 
-Formats time to Central Time.
-```{r}
-bitcoin$timestamp <- .POSIXct(bitcoin$timestamp, tz = "US/Central")
-```
 
 ```{r}
-
+bitcoin$date_time <- as_datetime(bitcoin$timestamp, tz = "US/Central")
+bitcoin$date <- as_date(bitcoin$date_time)
 ```
 
 
+```{r}
+bitcoin <- bitcoin %>%
+  filter(close != "NaN")
 
+btc <- bitcoin %>%
+  group_by(date) %>%
+  summarise(daily_high = max(high),
+            daily_low = min(low),
+            daily_median = median(weighted_price),
+            daily_mean = mean(weighted_price)) %>%
+  distinct(date, .keep_all = T)
+```
+
+
+
+```{r}
+btc_zoo <- read.zoo(btc, format = "%Y-%m-%d")
+```
+
+```{r}
+btc_train <- window(btc_zoo, end = "2019-12-31")
+btc_test <- window(btc_zoo, start =  "2019-12-31")
+
+tail(btc_train)
+```
+
+```{r}
+btc_arima <- auto.arima(btc_train$daily_mean)
+```
+
+```{r}
+btc_pred <- forecast(btc_arima, h = nrow(btc_test))
+
+btc_regress <- lm(daily_mean ~ date, data = btc) 
+
+summary(btc_regress)
+AIC(btc_regress)
+```
 
